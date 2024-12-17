@@ -4,6 +4,11 @@
 version: 0.2
 env:
   shell: bash
+  parameter-store:
+        AWS_REGION: MY_AWS_REGION
+        AWS_ACCOUNT_ID: MY_AWS_ACCOUNT_ID
+        ECR_REPO_NAME: MY_ECR_REPO_NAME
+        K8S_CLUSTER: MY_K8S_CLUSTER
 phases:
   install:
     on-failure: ABORT
@@ -13,7 +18,8 @@ phases:
       # - AWS_ACCOUNT_ID
       # - ECR_REPO_NAME
       # - K8S_CLUSTER
-
+      - echo "*** MY_ECR_REPO_NAME... ***"
+      - echo $MY_ECR_REPO_NAME
 
       # Login to AWS
       - echo "*** Login AWS... ***"
