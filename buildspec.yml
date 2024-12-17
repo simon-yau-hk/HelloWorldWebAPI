@@ -19,7 +19,7 @@ phases:
       # - ECR_REPO_NAME
       # - K8S_CLUSTER
       - echo "*** MY_ECR_REPO_NAME... ***"
-      - echo $MY_ECR_REPO_NAME
+      - echo "ECR_REPO_NAME: $ECR_REPO_NAME"
 
       # Login to AWS
       - echo "*** Login AWS... ***"
