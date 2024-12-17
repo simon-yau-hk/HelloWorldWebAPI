@@ -1,0 +1,46 @@
+# Notes:
+# For testing purpose
+
+version: 0.2
+env:
+  shell: bash
+phases:
+  install:
+    on-failure: ABORT
+    commands:
+      # Note: the following commented variables MUST be set in the CodeBuild project:
+      # - AWS_REGION
+      # - AWS_ACCOUNT_ID
+      # - ECR_REPO_NAME
+      # - K8S_CLUSTER
+
+
+      # Login to AWS
+      - echo "*** Login AWS... ***"
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+  build:
+    on-failure: ABORT
+    commands:
+      # build the docker image
+      - echo "*** Building/pulling the docker image... ***"
+      - docker build . -t $ECR_REPO_NAME --build-arg env=${STAGE,,}
+      - echo debug command -- build . -t $ECR_REPO_NAME --build-arg env=${STAGE,,}
+  post_build:
+    on-failure: ABORT
+    commands:
+      # Tag the docker image
+      - echo "*** Tagging to ECR... ***"
+      - docker tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME-${ECR_ENV,,}-repository:latest
+      - echo debug command -- tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME-${ECR_ENV,,}-repository:latest
+      
+      # Push the docker image
+      - echo "*** Pushing to ECR... ***"
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME-${ECR_ENV,,}-repository:latest
+      - echo debug command -- push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME-${ECR_ENV,,}-repository:latest
+      
+      # Restart the POD in k8s
+      - echo "*** Log in the k8s... ***"
+      - aws eks update-kubeconfig --verbose --name $K8S_CLUSTER --region $AWS_REGION
+      - echo "*** Restarting the POD... ***"
+      - kubectl rollout restart -n pms-${ECR_ENV,,} deployment/${DEPLOYMENT,,}
+      - echo debug command -- kubectl rollout restart -n pms-${ECR_ENV,,} deployment/${DEPLOYMENT,,}
